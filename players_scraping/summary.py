@@ -7,7 +7,7 @@ Created on Mon Dec  5 17:43:17 2022
 
 class summary():
     
-    def _init__(self,name,club,position,apps,mins,goals,assists,yel,red,spg,ps,aerials,motm,rating):
+    def __init__(self,name,club,position,apps,mins,goals,assists,yel,red,spg,ps,aerials,motm,rating):
         self.name = name
         self.club = club
         self.position = position

@@ -10,9 +10,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException,NoSuchElementException
+from functions import get_tables
+from summary import summary
 import time
 import math
-from functions import get_tables
 import pandas as pd
 
 
@@ -93,20 +94,37 @@ all_summary.append(table)
 ## Player creation
 
 
-
+summary_player = pd.DataFrame(columns=['name','club','position','apps','mins','goals','assists','yel','red','spg','ps%','aerials_won','motm','rating'])
 for x in all_summary:
     try:
-        name = x.split('\n')
-        players_num = int(len(name))
+        players = x.split('\n')
+        players_num = int(len(players))
         players_num = math.floor((players_num / 4))
-        # club = x.split('\n').split('\n').split(',')[0]
-        # possiton = x.split('\n').split('\n').split(',').split('\n')[0]
-        # apps = x.split('\n').split('\n').split(',').split('\n').split('(')[0]
-        # mins = x.split('\n').split('\n').split(',').split('\n').split(' ').split(' ')[0]
+        name_index = 3
+        for i in range(0,players_num):
+            name = players[name_index]
+            club = players[name_index + 1].split(',')[0]
+            position = players[name_index + 1].split(',')[-1]
+            stats = players[name_index + 2].split(' ')
+            apps = stats[0]
+            mins = stats[1]
+            goals = stats[2]
+            assists = stats[3]
+            yel = stats[4]
+            red = stats[5]
+            spg = stats[6]
+            ps = stats[7]
+            aerials = stats[8]
+            motm = stats[9]
+            rating = stats[10]
+            
+            summary_p = {'name':name,'club':club,'position':position,'apps':apps,'mins':mins,'goals':goals,'assists':assists,'yel':yel,'red':red,'spg':spg,'ps%':ps,'aerials_won':aerials,'motm':motm,'rating':rating}
+            summary_player = summary_player.append(summary_p,ignore_index=True)
+            
+            name_index += 4 
+        
+        
+    except Exception as e:
+        print(e)
     
-        # print(name+" "+club+" "+possiton+" "+apps+" "+mins)
-        print(players_num)
-    except:
-        print("error")
-    
-    
+print(summary_player)    
