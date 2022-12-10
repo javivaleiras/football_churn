@@ -9,6 +9,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException,NoSuchElementException
+import config
+import time 
 import pandas as pd
 import math
 
@@ -17,32 +19,36 @@ def get_tables(driver,xpath_table,to_click='//a[@id="next"]',listbox='//dl[@clas
     next_page = True
     while next_page:
        
-        WebDriverWait(driver, 1000000000)\
+        time.sleep(config.sleep_time)
+        WebDriverWait(driver, config.wait_time_drivers)\
             .until(EC.element_to_be_clickable((By.XPATH,
                                                 xpath_table)))
-
+        
+        
         table_columns = driver.find_element_by_xpath(xpath_table)
         table = table_columns.text
         all_table.append(table)
-
+        
         try:
-            WebDriverWait(driver, 1000000000)\
+            WebDriverWait(driver, config.wait_time_drivers)\
                     .until(EC.element_to_be_clickable((By.XPATH,
                                                        to_click.replace(' ', '.'))))\
                     .click()
         except:
-            WebDriverWait(driver, 1000000000)\
-                    .until(EC.element_to_be_clickable((By.XPATH,
-                                                       to_click.replace(' ', '.'))))\
-                    .click()
-
-        is_next = driver.find_element_by_xpath(listbox).text
-        is_next = is_next.split('|')[0]
-        page1 = is_next.split('/')[0].split(' ')[1]
-        page2 = is_next.split('/')[1]
-        if(int(page1) == int(page2)):
-            next_page = False
-
+          
+            WebDriverWait(driver, config.wait_time_drivers)\
+                        .until(EC.element_to_be_clickable((By.XPATH,
+                                                           to_click.replace(' ', '.'))))\
+                        .click()
+        try:  
+            is_next = driver.find_element_by_xpath(listbox).text
+            is_next = is_next.split('|')[0]
+            page1 = is_next.split('/')[0].split(' ')[1]
+            page2 = is_next.split('/')[1]
+            if(int(page1) == int(page2)):
+                next_page = False
+        except:
+            print("Warning - error reading page number")
 
     return all_table
 
@@ -75,8 +81,7 @@ def create_df_summary(all_summary):
 
                       summary_p = {'name': name, 'club': club, 'position': position, 'apps': apps, 'mins': mins, 'goals': goals,
                           'assists': assists, 'yel': yel, 'red': red, 'shots': spg, 'ps%': ps, 'aerials_won': aerials, 'motm': motm, 'rating': rating}
-                      summary_player = summary_player.append(
-                          summary_p, ignore_index=True)
+                      summary_player = summary_player.append(summary_p, ignore_index=True)
 
                       name_index += 4
 
