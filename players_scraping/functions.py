@@ -10,9 +10,15 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException,NoSuchElementException
 import config
+import shutil
 import time 
 import pandas as pd
+import pathlib 
 import math
+import os
+import glob
+
+
 
 def get_tables(driver,xpath_table,to_click='//a[@id="next"]',listbox='//dl[@class="listbox right"]//b'):
     all_table = []
@@ -198,3 +204,14 @@ def merge_all_dfs(summary,defensive,offensive,passing):
     final = pd.merge(a,b,left_on=['name','club','position','mins'], right_on=['name','club','position','mins'], how='left')
     final = final.drop_duplicates()
     return final
+
+
+def merge_all_csvs_and_delete():
+    os.chdir("./tmp")
+    extension = 'csv'
+    all_filenames = [i for i in glob.glob('*.{}'.format(extension))]
+    combined_csv = pd.concat([pd.read_csv(f) for f in all_filenames ])
+    # combined_csv.to_csv( "players_stats.csv", index=False, encoding='utf-8-sig')
+    # shutil.move("players_stats.csv",config.route_file)
+    # shutil.rmtree("../tmp",ignore_errors=True)
+  

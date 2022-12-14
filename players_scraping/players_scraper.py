@@ -10,12 +10,13 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException,NoSuchElementException
-from functions import get_tables,create_df_summary,create_df_defensive,create_df_offensive,create_df_passing,merge_all_dfs
+from functions import get_tables,create_df_summary,create_df_defensive,create_df_offensive,create_df_passing,merge_all_dfs,merge_all_csvs_and_delete
 from selenium.webdriver.support.select import Select
 import time
 import math
 import pandas as pd
 import config
+import os
 
 
 
@@ -38,21 +39,22 @@ all_defensive=[]
 all_offensive=[]
 all_passing=[]
 seasons = config.seasons
-
+wait_time_drivers = config.wait_time_drivers
 # browser
-driver.get('https://www.whoscored.com/Regions/206/Tournaments/4/Seasons/1929/Stages/3218/PlayerStatistics/Spain-LaLiga-2009-2010')
+driver.get(config.initial_page)
 
 
 # accept cookies
-WebDriverWait(driver, config.wait_time_drivers)\
+WebDriverWait(driver, wait_time_drivers)\
     .until(EC.element_to_be_clickable((By.CSS_SELECTOR,
                                       'button.css-1wc0q5e'.replace(' ', '.'))))\
     .click()
     
-for next_season in seasons:
+for current_season in seasons:
+    next_season = seasons[seasons.index(current_season) + 1]
     
     # all players
-    WebDriverWait(driver, config.wait_time_drivers)\
+    WebDriverWait(driver, wait_time_drivers)\
         .until(EC.element_to_be_clickable((By.XPATH,
                                           '//*[@id="apps"]/dd[2]/a'.replace(' ', '.'))))\
         .click()
@@ -61,7 +63,7 @@ for next_season in seasons:
     
     # players table
     all_summary = get_tables(driver,'//div[@id="statistics-table-summary"]','//div[@id="statistics-paging-summary"]//a[@id="next"]')
-    WebDriverWait(driver, config.wait_time_drivers)\
+    WebDriverWait(driver, wait_time_drivers)\
                 .until(EC.element_to_be_clickable((By.XPATH,
                                                     '//div[@id="statistics-table-summary"]')))
                 
@@ -73,16 +75,18 @@ for next_season in seasons:
     all_summary.append(table)
     
     #defensive
-    WebDriverWait(driver, config.wait_time_drivers)\
+    WebDriverWait(driver, wait_time_drivers)\
         .until(EC.element_to_be_clickable((By.XPATH,
                                           '//li[@class="in-squad-detailed-view"]//a[@href="#stage-top-player-stats-defensive"]'.replace(' ', '.'))))\
         .click()
     
     # all players
-    WebDriverWait(driver, config.wait_time_drivers)\
+    
+    WebDriverWait(driver, wait_time_drivers)\
         .until(EC.element_to_be_clickable((By.XPATH,
-                                          '/html/body/div[5]/div[5]/div[3]/div[1]/div[2]/dl[2]/dd[2]/a'.replace(' ', '.'))))\
-        .click()
+                                          '(//*[@id="apps"]/dd[2]/a)[2]'.replace(' ', '.'))))\
+            .click()
+ 
     
     
     all_defensive = get_tables(driver,'//div[@id="statistics-table-defensive"]',
@@ -96,15 +100,15 @@ for next_season in seasons:
     
     
     #offensive
-    WebDriverWait(driver, config.wait_time_drivers)\
+    WebDriverWait(driver, wait_time_drivers)\
         .until(EC.element_to_be_clickable((By.XPATH,
                                           '//li[@class="in-squad-detailed-view"]//a[@href="#stage-top-player-stats-offensive"]'.replace(' ', '.'))))\
         .click()
     
     # all players
-    WebDriverWait(driver, config.wait_time_drivers)\
+    WebDriverWait(driver, wait_time_drivers)\
         .until(EC.element_to_be_clickable((By.XPATH,
-                                          '/html/body/div[5]/div[5]/div[4]/div[1]/div[2]/dl[2]/dd[2]/a'.replace(' ', '.'))))\
+                                          '(//*[@id="apps"]/dd[2]/a)[3]'.replace(' ', '.'))))\
         .click()
     
     all_offensive = get_tables(driver,'//div[@id="statistics-table-offensive"]',
@@ -117,15 +121,15 @@ for next_season in seasons:
     all_offensive.append(table)
     
     #passing
-    WebDriverWait(driver, config.wait_time_drivers)\
+    WebDriverWait(driver, wait_time_drivers)\
         .until(EC.element_to_be_clickable((By.XPATH,
                                           '//li[@class="in-squad-detailed-view"]//a[@href="#stage-top-player-stats-passing"]'.replace(' ', '.'))))\
         .click()
         
     # all players
-    WebDriverWait(driver, config.wait_time_drivers)\
+    WebDriverWait(driver, wait_time_drivers)\
         .until(EC.element_to_be_clickable((By.XPATH,
-                                          '/html/body/div[5]/div[5]/div[5]/div[1]/div[2]/dl[2]/dd[2]/a'.replace(' ', '.'))))\
+                                          '(//*[@id="apps"]/dd[2]/a)[4]'.replace(' ', '.'))))\
         .click()
     
     
@@ -155,14 +159,32 @@ for next_season in seasons:
     season = driver.find_element_by_xpath('//*[@id="seasons"]//option[@selected="selected"]').text
     season1 = season.split("/")[0]
     season2 = season.split("/")[1]
-    final.to_csv(league+season1+"-"+season2+".csv")
+    
+    
+    # add league and season to dataframe
+    final['league'] = league
+    final['season'] = season
+    
+    # create folder and csv
+    outname = league+season1+"-"+season2+".csv"
+
+    outdir = './tmp'
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+
+    fullname = os.path.join(outdir, outname)   
+    final.to_csv(fullname)
     
     
     # next league and season to scrap
     select_element = driver.find_element(By.XPATH, '//*[@id="seasons"]')
     select = Select(select_element)
     select.select_by_visible_text(next_season)
-    WebDriverWait(driver, config.wait_time_drivers)\
+    WebDriverWait(driver, wait_time_drivers)\
         .until(EC.element_to_be_clickable((By.XPATH,
                                           '//*[@id="sub-navigation"]/ul/li[4]/a'.replace(' ', '.'))))\
         .click()
+
+
+
+merge_all_csvs_and_delete()
