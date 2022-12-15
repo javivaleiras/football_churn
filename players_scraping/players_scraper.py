@@ -51,7 +51,8 @@ WebDriverWait(driver, wait_time_drivers)\
     .click()
     
 for current_season in seasons:
-    next_season = seasons[seasons.index(current_season) + 1]
+    if (seasons.index(current_season) + 1 != len(seasons)):
+        next_season = seasons[seasons.index(current_season) + 1]
     
     # all players
     WebDriverWait(driver, wait_time_drivers)\
@@ -177,13 +178,14 @@ for current_season in seasons:
     
     
     # next league and season to scrap
-    select_element = driver.find_element(By.XPATH, '//*[@id="seasons"]')
-    select = Select(select_element)
-    select.select_by_visible_text(next_season)
-    WebDriverWait(driver, wait_time_drivers)\
-        .until(EC.element_to_be_clickable((By.XPATH,
-                                          '//*[@id="sub-navigation"]/ul/li[4]/a'.replace(' ', '.'))))\
-        .click()
+    if (seasons.index(current_season) + 1 != len(seasons)):
+        select_element = driver.find_element(By.XPATH, '//*[@id="seasons"]')
+        select = Select(select_element)
+        select.select_by_visible_text(next_season)
+        WebDriverWait(driver, wait_time_drivers)\
+            .until(EC.element_to_be_clickable((By.XPATH,
+                                              '//*[@id="sub-navigation"]/ul/li[4]/a'.replace(' ', '.'))))\
+            .click()
 
 
 
