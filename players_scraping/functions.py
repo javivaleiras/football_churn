@@ -207,7 +207,7 @@ def merge_all_dfs(summary,defensive,offensive,passing):
 
 
 def merge_all_csvs_and_delete():
-    os.chdir("./tmp")
+    os.chdir("./data")
     extension = 'csv'
     all_filenames = [i for i in glob.glob('*.{}'.format(extension))]
     combined_csv = pd.concat([pd.read_csv(f) for f in all_filenames ])

@@ -176,7 +176,7 @@ for initial_page in initial_pages:
         # create folder and csv
         outname = league+season1+"-"+season2+".csv"
     
-        outdir = './tmp'
+        outdir = './data'
         if not os.path.exists(outdir):
             os.mkdir(outdir)
     
