@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Spyder Editor
 
-This is a temporary script file.
-"""
 
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
@@ -35,7 +31,7 @@ driver.maximize_window()
 time.sleep(1)
 
 
-# variables
+# Variables
 seasons = config.seasons
 first_page = True
 initial_pages = config.initial_pages
@@ -92,6 +88,10 @@ for initial_page in initial_pages:
         final['league'] = league
         final['season'] = season
         
+        # add league and season to dataframe
+        league_df['league'] = league
+        league_df['season'] = season
+        
         # create folder and csv of stats
         outname_stats = league+season1+"-"+season2+".csv"
         
@@ -127,5 +127,6 @@ for initial_page in initial_pages:
        
 
 
-
-merge_all_csvs_and_delete()
+# merge all dataframes generated into one single dataframe
+merge_all_csv_and_delete("./data_stats","players_stats.csv")
+merge_all_csv_and_delete("./data_classification","leagues_classification.csv")

@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Dec  4 23:46:07 2022
 
-@author: javic
-"""
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -359,10 +355,12 @@ def merge_all_dfs(summary,defensive,offensive,passing):
     return final
 
 
-def merge_all_csvs_and_delete():
-    os.chdir("./data_stats")
+def merge_all_csv_and_delete(csv_route,csv_output_name):
+    os.chdir(csv_route)
     extension = 'csv'
     all_filenames = [i for i in glob.glob('*.{}'.format(extension))]
     combined_csv = pd.concat([pd.read_csv(f) for f in all_filenames ])
-    combined_csv.to_csv( "players_stats.csv", index=False, encoding='utf-8-sig')
+    combined_csv.to_csv(csv_output_name, index=False, encoding='utf-8-sig')
+    
+
 
