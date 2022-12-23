@@ -10,7 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException,NoSuchElementException
-from functions import get_tables,create_df_summary,create_df_defensive,create_df_offensive,create_df_passing,merge_all_dfs,merge_all_csvs_and_delete
+from functions import *
 from selenium.webdriver.support.select import Select
 import time
 import math
@@ -25,7 +25,7 @@ options =  webdriver.ChromeOptions()
 options.add_argument('--start-maximized')
 options.add_argument('--disable-extensions')
 
-driver_path = 'C:\\Users\\javic\\Downloads\\chromedriver.exe'
+driver_path = config.driver_path
 
 driver = webdriver.Chrome(driver_path, chrome_options=options)
 
@@ -34,17 +34,16 @@ driver.set_window_position(2000, 0)
 driver.maximize_window()
 time.sleep(1)
 
-all_summary=[]
-all_defensive=[]
-all_offensive=[]
-all_passing=[]
+
+# variables
 seasons = config.seasons
 first_page = True
 initial_pages = config.initial_pages
-
 wait_time_drivers = config.wait_time_drivers
 
+# through all inital pages
 for initial_page in initial_pages:
+    
     # browser
     driver.get(initial_page)
 
@@ -56,113 +55,33 @@ for initial_page in initial_pages:
                                               'button.css-1wc0q5e'.replace(' ', '.'))))\
             .click()
         first_page = False
-        
+    
+    #through all seasons
     for current_season in seasons:
-        if (seasons.index(current_season) + 1 != len(seasons)):
-            next_season = seasons[seasons.index(current_season) + 1]
         
-        # all players
-        WebDriverWait(driver, wait_time_drivers)\
-            .until(EC.element_to_be_clickable((By.XPATH,
-                                              '//*[@id="apps"]/dd[2]/a'.replace(' ', '.'))))\
-            .click()
+        #get year of current season to get the age
+        year_of_current_season = current_season.split('/')[1]
+        
+        #get league classification
+        league_df = get_league_df(driver)
         
         
+        # get summary stats
+        summary_player = get_summary_df(driver,year_of_current_season)
         
-        # players table
-        all_summary = get_tables(driver,'//div[@id="statistics-table-summary"]','//div[@id="statistics-paging-summary"]//a[@id="next"]')
-        WebDriverWait(driver, wait_time_drivers)\
-                    .until(EC.element_to_be_clickable((By.XPATH,
-                                                        '//div[@id="statistics-table-summary"]')))
-                    
+        # get defensive stats
+        defensive_player = get_defensive_df(driver)
         
+        # get offensive stats
+        offensive_player = get_offensive_df(driver)
         
-        #get last player
-        table_columns = driver.find_element_by_xpath('//div[@id="statistics-table-summary"]')
-        table = table_columns.text
-        all_summary.append(table)
+        # get passing stats
+        pasing_player = get_passing_df(driver)        
         
-        #defensive
-        WebDriverWait(driver, wait_time_drivers)\
-            .until(EC.element_to_be_clickable((By.XPATH,
-                                              '//li[@class="in-squad-detailed-view"]//a[@href="#stage-top-player-stats-defensive"]'.replace(' ', '.'))))\
-            .click()
-        
-        # all players
-        
-        WebDriverWait(driver, wait_time_drivers)\
-            .until(EC.element_to_be_clickable((By.XPATH,
-                                              '(//*[@id="apps"]/dd[2]/a)[2]'.replace(' ', '.'))))\
-                .click()
-     
-        
-        
-        all_defensive = get_tables(driver,'//div[@id="statistics-table-defensive"]',
-                                    '//div[@id="statistics-paging-defensive"]//a[@id="next"]',
-                                    '//div[@id="statistics-paging-defensive"]//dl[@class="listbox right"]//b')
-        
-        #get last player
-        table_columns = driver.find_element_by_xpath('//div[@id="statistics-table-defensive"]')
-        table = table_columns.text
-        all_defensive.append(table)
-        
-        
-        #offensive
-        WebDriverWait(driver, wait_time_drivers)\
-            .until(EC.element_to_be_clickable((By.XPATH,
-                                              '//li[@class="in-squad-detailed-view"]//a[@href="#stage-top-player-stats-offensive"]'.replace(' ', '.'))))\
-            .click()
-        
-        # all players
-        WebDriverWait(driver, wait_time_drivers)\
-            .until(EC.element_to_be_clickable((By.XPATH,
-                                              '(//*[@id="apps"]/dd[2]/a)[3]'.replace(' ', '.'))))\
-            .click()
-        
-        all_offensive = get_tables(driver,'//div[@id="statistics-table-offensive"]',
-                                    '//div[@id="statistics-paging-offensive"]//a[@id="next"]',
-                                    '//div[@id="statistics-paging-offensive"]//dl[@class="listbox right"]//b')
-        
-        #get last player
-        table_columns = driver.find_element_by_xpath('//div[@id="statistics-table-offensive"]')
-        table = table_columns.text
-        all_offensive.append(table)
-        
-        #passing
-        WebDriverWait(driver, wait_time_drivers)\
-            .until(EC.element_to_be_clickable((By.XPATH,
-                                              '//li[@class="in-squad-detailed-view"]//a[@href="#stage-top-player-stats-passing"]'.replace(' ', '.'))))\
-            .click()
-            
-        # all players
-        WebDriverWait(driver, wait_time_drivers)\
-            .until(EC.element_to_be_clickable((By.XPATH,
-                                              '(//*[@id="apps"]/dd[2]/a)[4]'.replace(' ', '.'))))\
-            .click()
-        
-        
-        all_passing = get_tables(driver,'//div[@id="statistics-table-passing"]',
-                                    '//div[@id="statistics-paging-passing"]//a[@id="next"]',
-                                    '//div[@id="statistics-paging-passing"]//dl[@class="listbox right"]//b')
-        
-        #get last player
-        table_columns = driver.find_element_by_xpath('//div[@id="statistics-table-passing"]')
-        table = table_columns.text
-        all_passing.append(table)
-        
-        
-        
-        
-        ## Player creation
-        
-        summary_player = create_df_summary(all_summary)
-        defensive_player = create_df_defensive(all_defensive)
-        offensive_player = create_df_offensive(all_offensive)
-        passing_player = create_df_passing(all_passing)
-                
+        # merge all dataframes in one        
         final = merge_all_dfs(summary_player, defensive_player, offensive_player, passing_player)
         
-        # get league and season
+        # get league and season scrapped
         league = driver.find_element_by_xpath('//*[@id="tournaments"]//option[@selected="selected"]').text
         season = driver.find_element_by_xpath('//*[@id="seasons"]//option[@selected="selected"]').text
         season1 = season.split("/")[0]
@@ -173,26 +92,39 @@ for initial_page in initial_pages:
         final['league'] = league
         final['season'] = season
         
-        # create folder and csv
-        outname = league+season1+"-"+season2+".csv"
-    
-        outdir = './data'
+        # create folder and csv of stats
+        outname_stats = league+season1+"-"+season2+".csv"
+        
+        
+        outdir = './data_stats'
         if not os.path.exists(outdir):
             os.mkdir(outdir)
     
-        fullname = os.path.join(outdir, outname)   
+        fullname = os.path.join(outdir, outname_stats)   
         final.to_csv(fullname)
         
         
+        
+        # create folder and csv of league classification
+        outname_class = "classification_"+league+season1+"-"+season2+".csv"
+        outdir = './data_classification'
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+    
+        fullname = os.path.join(outdir, outname_class)   
+        league_df.to_csv(fullname)
+        
+        
+        
+        # get next season if is not the last one
+        if (seasons.index(current_season) + 1 != len(seasons)):
+            next_season = seasons[seasons.index(current_season) + 1]
         # next league and season to scrap
         if (seasons.index(current_season) + 1 != len(seasons)):
             select_element = driver.find_element(By.XPATH, '//*[@id="seasons"]')
             select = Select(select_element)
             select.select_by_visible_text(next_season)
-            WebDriverWait(driver, wait_time_drivers)\
-                .until(EC.element_to_be_clickable((By.XPATH,
-                                                  '//*[@id="sub-navigation"]/ul/li[4]/a'.replace(' ', '.'))))\
-                .click()
+       
 
 
 

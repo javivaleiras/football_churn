@@ -17,9 +17,138 @@ import pathlib
 import math
 import os
 import glob
+import datetime
+import re
+
+year_today = datetime.date.today().year
+wait_time_drivers = config.wait_time_drivers
 
 
+def get_passing_df(driver):
+        all_passing = []
+        
+        # get to passing page
+        webdrivermanage(driver, '//li[@class="in-squad-detailed-view"]//a[@href="#stage-top-player-stats-passing"]',True)
 
+        # all players page
+        webdrivermanage(driver, '(//*[@id="apps"]/dd[2]/a)[4]',True)
+                
+        all_passing = get_tables(driver,'//div[@id="statistics-table-passing"]',
+                                    '//div[@id="statistics-paging-passing"]//a[@id="next"]',
+                                    '//div[@id="statistics-paging-passing"]//dl[@class="listbox right"]//b')
+        
+        #get last player
+        table = get_table_last_player(driver, '//div[@id="statistics-table-passing"]')
+        all_passing.append(table)
+        
+        passing_player = create_df_passing(all_passing)
+        
+        return passing_player
+
+
+def get_offensive_df(driver):
+        all_offensive = []
+        
+       #get to offensive page
+        webdrivermanage(driver, '//li[@class="in-squad-detailed-view"]//a[@href="#stage-top-player-stats-offensive"]',True)
+
+       
+       # all players page
+        webdrivermanage(driver, '(//*[@id="apps"]/dd[2]/a)[3]',True)
+       
+        all_offensive = get_tables(driver,'//div[@id="statistics-table-offensive"]',
+                                   '//div[@id="statistics-paging-offensive"]//a[@id="next"]',
+                                   '//div[@id="statistics-paging-offensive"]//dl[@class="listbox right"]//b')
+       
+       #get last player
+        table = get_table_last_player(driver, '//div[@id="statistics-table-offensive"]')
+        all_offensive.append(table)
+       
+       # trasnform table into dataframe
+        offensive_player = create_df_offensive(all_offensive)
+       
+        return offensive_player
+
+def get_defensive_df(driver):
+        all_defensive = []
+        
+        #get to defensive page
+        webdrivermanage(driver, '//li[@class="in-squad-detailed-view"]//a[@href="#stage-top-player-stats-defensive"]',True)
+        
+        # all players page
+        webdrivermanage(driver, '(//*[@id="apps"]/dd[2]/a)[2]',True)
+        
+    
+        all_defensive = get_tables(driver,'//div[@id="statistics-table-defensive"]',
+                                    '//div[@id="statistics-paging-defensive"]//a[@id="next"]',
+                                    '//div[@id="statistics-paging-defensive"]//dl[@class="listbox right"]//b')
+        
+        #get last player
+        table = get_table_last_player(driver, '//div[@id="statistics-table-defensive"]')
+        all_defensive.append(table)
+        
+        # trasnform table into dataframe
+        defensive_player = create_df_defensive(all_defensive)
+        
+        return defensive_player
+        
+        
+        
+
+def get_summary_df(driver,year_of_current_season):
+        all_summary = []
+        #get to players statistics page
+        webdrivermanage(driver, '//*[@id="sub-navigation"]/ul/li[4]/a',True)
+        
+        # all players page
+        webdrivermanage(driver, '//*[@id="apps"]/dd[2]/a',True)
+                
+        # players table
+        all_summary = get_tables(driver,'//div[@id="statistics-table-summary"]','//div[@id="statistics-paging-summary"]//a[@id="next"]')
+        webdrivermanage(driver, '//div[@id="statistics-table-summary"]')
+
+        #get last player
+        table = get_table_last_player(driver, '//div[@id="statistics-table-summary"]')
+        all_summary.append(table)
+        
+        # trasnform table into dataframe
+        summary_player = create_df_summary(all_summary,year_of_current_season)
+        
+        return summary_player
+    
+
+def get_league_df(driver):
+        webdrivermanage(driver,'//div[@class="ml12-lg-3 ml12-m-3 ml12-s-4 ml12-xs-5 semi-attached-table"]')
+        league_df = get_league(driver,'//div[@class="ml12-lg-3 ml12-m-3 ml12-s-4 ml12-xs-5 semi-attached-table"]')
+        
+        return league_df
+    
+        
+def get_league(driver,xpath_table):
+    time.sleep(config.sleep_time)
+    league_class = pd.DataFrame(columns=['position', 'club'])
+    count = 0
+    table_columns = driver.find_element_by_xpath(xpath_table)
+    table_league = table_columns.text
+    table_league = table_league.split('\n')
+   
+    for x in table_league:
+        if count < 2:
+            count+= 1
+        else:
+          club = re.split("[^a-zA-Z]*", x)
+          del club[len(club) - 8:]
+          club = ' '.join(club)
+          club = club.strip()
+          club = club.replace(" ", "")
+          league_p = {'position': count - 1, 'club': club}
+          league_class = league_class.append(league_p, ignore_index=True)
+          count += 1
+          
+    return league_class   
+          
+          
+          
 def get_tables(driver,xpath_table,to_click='//a[@id="next"]',listbox='//dl[@class="listbox right"]//b'):
     all_table = []
     next_page = True
@@ -59,8 +188,8 @@ def get_tables(driver,xpath_table,to_click='//a[@id="next"]',listbox='//dl[@clas
     return all_table
 
 
-def create_df_summary(all_summary):
-       summary_player = pd.DataFrame(columns=['name', 'club', 'position', 'apps', 'mins',
+def create_df_summary(all_summary,year_of_current_season):
+       summary_player = pd.DataFrame(columns=['name', 'club','age','position', 'apps', 'mins',
                                      'goals', 'assists', 'yel', 'red', 'shots', 'ps%', 'aerials_won', 'motm', 'rating'])
        for x in all_summary:
              try:
@@ -71,6 +200,12 @@ def create_df_summary(all_summary):
                   for i in range(0, players_num):
                       name = players[name_index].strip()
                       club = players[name_index + 1].split(',')[0].strip()
+                      
+                      # In the web appears the acutal age instead of the one that the player had during that season
+                      age_now = players[name_index + 1].split(',')[1].strip()
+                      years_to_substract = int(year_today) - int(year_of_current_season)
+                      age_season = int(age_now) - int(years_to_substract)
+                      
                       position = players[name_index + 1].split(',')[-1].strip()
                       stats = players[name_index + 2].split(' ')
                       apps = stats[0].strip()
@@ -85,7 +220,7 @@ def create_df_summary(all_summary):
                       motm = stats[9].strip()
                       rating = stats[10].strip()
 
-                      summary_p = {'name': name, 'club': club, 'position': position, 'apps': apps, 'mins': mins, 'goals': goals,
+                      summary_p = {'name': name, 'club': club,'age':age_season ,'position': position, 'apps': apps, 'mins': mins, 'goals': goals,
                           'assists': assists, 'yel': yel, 'red': red, 'shots': spg, 'ps%': ps, 'aerials_won': aerials, 'motm': motm, 'rating': rating}
                       summary_player = summary_player.append(summary_p, ignore_index=True)
 
@@ -198,6 +333,24 @@ def create_df_passing(all_passing):
     return passing_player
 
 
+def webdrivermanage(driver,xpath,click=False):
+    if click:
+        WebDriverWait(driver, wait_time_drivers)\
+            .until(EC.element_to_be_clickable((By.XPATH,
+                                              xpath.replace(' ', '.'))))\
+            .click()
+    else:
+        WebDriverWait(driver, wait_time_drivers)\
+                    .until(EC.element_to_be_clickable((By.XPATH,
+                                                        xpath)))
+                    
+
+def get_table_last_player(driver,xpath):
+        table_columns = driver.find_element_by_xpath('//div[@id="statistics-table-summary"]')
+        table = table_columns.text
+        return table
+
+
 def merge_all_dfs(summary,defensive,offensive,passing):
     a = pd.merge(summary,defensive,left_on=['name','club','position','mins'], right_on=['name','club','position','mins'], how='left')
     b = pd.merge(offensive,passing,left_on=['name','club','position','mins'], right_on=['name','club','position','mins'], how='left')
@@ -207,10 +360,9 @@ def merge_all_dfs(summary,defensive,offensive,passing):
 
 
 def merge_all_csvs_and_delete():
-    os.chdir("./data")
+    os.chdir("./data_stats")
     extension = 'csv'
     all_filenames = [i for i in glob.glob('*.{}'.format(extension))]
     combined_csv = pd.concat([pd.read_csv(f) for f in all_filenames ])
     combined_csv.to_csv( "players_stats.csv", index=False, encoding='utf-8-sig')
 
-  
