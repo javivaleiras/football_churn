@@ -72,7 +72,7 @@ for initial_page in initial_pages:
         offensive_player = get_offensive_df(driver)
         
         # get passing stats
-        pasing_player = get_passing_df(driver)        
+        passing_player = get_passing_df(driver)        
         
         # merge all dataframes in one        
         final = merge_all_dfs(summary_player, defensive_player, offensive_player, passing_player)
