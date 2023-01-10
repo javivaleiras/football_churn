@@ -24,6 +24,7 @@ def predict():
     # stub input features
     data = request.get_json() 
     # load model
+    print("ssssssssssssssssssssssssssssssss")
     model = load_models()
     prediction = model.predict(np.array(list(data.values())))
     response = json.dumps({'response': prediction[0]})
