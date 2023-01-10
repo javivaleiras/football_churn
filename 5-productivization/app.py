@@ -5,10 +5,8 @@ import flask
 from flask import Flask, jsonify, request
 import json
 import pickle
+import numpy as np
 
-app = Flask(__name__)
-
-@app.route('/predict', methods=['GET'])
 
 def load_models():
     file_name = "models/model_file.p"
@@ -17,13 +15,19 @@ def load_models():
         model = data['model']
     return model
 
+
+app = Flask(__name__)
+
+@app.route('/predict', methods=['GET'])
+
 def predict():
     # stub input features
-    x = 5.963    
+    data = request.get_json() 
     # load model
     model = load_models()
-    prediction = model.predict([[x]])[0]
-    response = json.dumps({'response': prediction})
+    prediction = model.predict(np.array(list(data.values())))
+    response = json.dumps({'response': prediction[0]})
+    
     return response, 200
 
 
