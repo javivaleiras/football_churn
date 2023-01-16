@@ -1,7 +1,7 @@
 # Football Players Churn Prediction
 * Scraped the stats of all players in the 5 best european leagues (Spanish, English,French,German and Italian) since season 09/10 to 21/22 season.
 * Scraped the league classifications at the end of each season.
-* Merged and standarized the scraped data with the tranfer window season downloaded from a github repository (link in references).
+* Merged and standardized the scraped data with the transfer window season downloaded from a Github repository (link in references).
 * Explored the information to discover insights.
 * Engineered features to reduce multicollinearity and add more value to the data.
 * Dealt with the imbalanced dataset using various techniques such as SMOTETomek, StratifiedKFold, etc.
@@ -31,7 +31,7 @@ Scraped a football website with stats of all players per league and an historic 
  *	Club
  *	Age
  *	Position
- *	Apps
+ *	Appearances
  *	Mins
  *	Goals
  *	Assists
@@ -45,7 +45,7 @@ Scraped a football website with stats of all players per league and an historic 
  *	Tackles
  *	Interceptions
  *	Fouls
- *	Offsides_won
+ *	Offsides won
  *	Clearances
  *	Dribbled
  *	Blocks
@@ -58,7 +58,7 @@ Scraped a football website with stats of all players per league and an historic 
  *	Bad controls
  *	Avg passes
  *	Crosses
- *	Long_passes
+ *	Long passes
  *	Through passes
  *	League
  *	Season
